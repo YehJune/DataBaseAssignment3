@@ -3,7 +3,7 @@ import java.sql.*;
 import java.io.*;
 import java.lang.reflect.Executable;
 
-public class SqlTest2 {
+public class SqlTest3 {
     private Connection connect = null;
     private Statement stmt = null;
     private ResultSet rs = null;
@@ -15,7 +15,7 @@ public class SqlTest2 {
 
     public static void main(String[] args) throws Exception {
         try{
-        SqlTest2 app = new SqlTest2();
+        SqlTest3 app = new SqlTest3();
         System.out.println("Creating Database Connection");
         app.connection();
 

@@ -13,143 +13,148 @@ public class SqlTest3 {
     private final String user = "postgres";
     private final String password = "2964";
 
-    public static void main(String[] args) throws Exception {
-        try{
-        SqlTest3 app = new SqlTest3();
-        System.out.println("Creating Database Connection");
-        app.connection();
+    public static void main(String[] args) {
+        try {
+            SqlTest3 app = new SqlTest3();
+            System.out.println("Creating Database Connection");
+            app.connection();
 
-        Scanner scan = new Scanner(System.in);
+            Scanner scan = new Scanner(System.in);
 
-        app.executeQ("DROP table student, college, apply CASCADE;");
+            app.stmt.executeUpdate("DROP table student, college, apply CASCADE;");
+            //app.executeQ("DROP table student, college, apply CASCADE;");
 
-          System.out.println("Creating college, student, apply relations");
-          // 3개 Table 생성: Create table문 이용
-          app.createTables();
-          
-          System.out.println("Inserting tuples to college, student, apply relations");
-          // 3개 Table에 Tuple 생성: Insert문 이용
-          app.insertTuples();
-          
-          System.out.println("Continue? (Enter 1 for continue)");
-          scan.nextLine();
+            System.out.println("Creating college, student, apply relations");
+            // 3개 Table 생성: Create table문 이용
+            app.createTables();
 
-        System.out.println("SQL Programming Test");
-        System.out.println("Trigger test 1");
+            System.out.println("Inserting tuples to college, student, apply relations");
+            // 3개 Table에 Tuple 생성: Insert문 이용
+            app.insertTuples();
 
-        // page14의 trigger R2 생성
-        app.executeQ("create or replace function triggerTest1() returns trigger as $$ begin delete from Apply where sID=Old.sID ;return null; end; $$ language 'plpgsql'; create trigger R2 after delete on Student for each row execute procedure triggerTest1(); ");
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
 
-        // Delete문 실행
-        app.executeQ("delete from Student where GPA < 3.5;");
+            System.out.println("SQL Programming Test");
+            System.out.println("Trigger test 1");
 
-        // Query 1
-        app.executeQ("select * from Student order by sID;");
-        app.printQ(1, 4);
-        System.out.println("Continue? (Enter 1 for continue)");
-        scan.nextLine();
+            // page14의 trigger R2 생성
+            app.stmt.executeUpdate(
+                    "create or replace function triggerTest1() returns trigger as $$ begin delete from Apply where sID=Old.sID ;return null; end; $$ language 'plpgsql'; create trigger R2 after delete on Student for each row execute procedure triggerTest1(); ");
 
-        // Query 2
-        app.executeQ("select * from Apply order by sID, cName, major;");
-        app.printQ(2, 4);
-        System.out.println("Continue? (Enter 1 for continue)");
-        scan.nextLine();
+            // Delete문 실행
+            app.stmt.executeUpdate("delete from Student where GPA < 3.5;");
 
-        System.out.println("Trigger test 2");
-        // Page 20의 Trigger R4 생성
-        app.executeQ("create or replace function triggerTest2() returns trigger as $$ begin IF exists (select * from college where cName = New.cName ) THEN return null; ELSE return New; END IF; end; $$ language'plpgsql';create trigger R4 before insert on college for each row execute procedure triggerTest2();");
+            // Query 1
+            app.executeQ("select * from Student order by sID;");
+            app.printQ(1, 4);
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
 
-        // insert문 실행
-        app.executeQ("insert into College values ('UCLA','CA',20000); insert into College values ('MIT','MI',10000);");
-        // Query 3
-        app.executeQ("select * from College order by cName;");
-        app.printQ(3, 3);
-        System.out.println("Continue? (Enter 1 for continue)");
-        scan.nextLine();
-        //테이블 및 튜플 리셋
-        app.executeQ("DROP table student, college, apply CASCADE;");
-        app.createTables();
-        app.insertTuples();
+            // Query 2
+            app.executeQ("select * from Apply order by sID, cName, major;");
+            app.printQ(2, 4);
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
 
-        System.out.println("View test 1");
-        // View CSEE 생성
-        app.executeQ("create view CSEE as select sID, cName, major from Apply where major ='CS' or major='EE'");
+            System.out.println("Trigger test 2");
+            // Page 20의 Trigger R4 생성
+            app.stmt.executeUpdate(
+                    "create or replace function triggerTest2() returns trigger as $$ begin IF exists (select * from college where cName = New.cName ) THEN return null; ELSE return New; END IF; end; $$ language'plpgsql';create trigger R4 before insert on college for each row execute procedure triggerTest2();");
 
-        // Query 4 실행하고 결과는 적절한 Print문을 이용해 Display
-        app.executeQ("select * from CSEE order by sID, cName, major;");
-        app.printQ(4, 3);
-        System.out.println("Continue? (Enter 1 for continue)");
-        scan.nextLine();
+            // insert문 실행
+            app.stmt.executeUpdate(
+                    "insert into College values ('UCLA','CA',20000); insert into College values ('MIT','MI',10000);");
+            // Query 3
+            app.executeQ("select * from College order by cName;");
+            app.printQ(3, 3);
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
+            // 테이블 및 튜플 리셋
+            app.stmt.executeUpdate("DROP table student, college, apply CASCADE;");
+            app.createTables();
+            app.insertTuples();
 
-        System.out.println("view test 2");
-        // Trigger CSEEinsert 생성
-        app.executeQ("create or replace function viewTest2() returns trigger as $$ begin IF New.major='CS' or New.major='EE' THEN insert into apply values (New.sID, New.cName, New.major, null); return New;  ELSE return null; END IF; end; $$language 'plpgsql'; create trigger CSEEinsert instead of insert on CSEE for each row execute procedure viewTest2();");
-        // Insert문 실행
-        app.executeQ("insert into CSEE values (333, 'UCLA', 'biology');");
-        // Query 5 실행하고 결과는 적절한 Print문을 이용해 Display
-        app.executeQ("select * from CSEE order by sID, cName, major;");
-        app.printQ(5, 3);
-        System.out.println("Continue? (Enter 1 for continue)");
-        scan.nextLine();
-        // Query 6 실행하고 결과는 적절한 Print문을 이용해 Display
-        app.executeQ("select * from apply order by sID, cName, major;");
-        app.printQ(6, 3);
-        System.out.println("Continue? (Enter 1 for continue)");
-        scan.nextLine();
+            System.out.println("View test 1");
+            // View CSEE 생성
+            app.stmt.executeUpdate("create view CSEE as select sID, cName, major from Apply where major ='CS' or major='EE'");
 
-        System.out.println("View test 3");
-        // Insert문 실행
-        app.executeQ("insert into CSEE values (333, 'UCLA', 'CS');");
-        // Query 7 실행하고 결과는 적절한 Print문을 이용해 Display
-        app.executeQ("select * from CSEE order by sID, cName, major;");
-        app.printQ(7, 3);
-        System.out.println("Continue? (Enter 1 for continue)");
-        scan.nextLine();
-        // Query 8 실행하고 결과는 적절한 Print문을 이용해 Display
-        app.executeQ("select * from Apply order by sID, cName, major;");
-        app.printQ(8, 4);
+            // Query 4 실행하고 결과는 적절한 Print문을 이용해 Display
+            app.executeQ("select * from CSEE order by sID, cName, major;");
+            app.printQ(4, 3);
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
 
-        app.close();
-    }catch(SQLException ex){
-            throw ex;
+            System.out.println("view test 2");
+            // Trigger CSEEinsert 생성
+            app.stmt.executeUpdate(
+                    "create or replace function viewTest2() returns trigger as $$ begin IF New.major='CS' or New.major='EE' THEN insert into apply values (New.sID, New.cName, New.major, null); return New;  ELSE return null; END IF; end; $$language 'plpgsql'; create trigger CSEEinsert instead of insert on CSEE for each row execute procedure viewTest2();");
+            // Insert문 실행
+            app.stmt.executeUpdate("insert into CSEE values (333, 'UCLA', 'biology');");
+            // Query 5 실행하고 결과는 적절한 Print문을 이용해 Display
+            app.executeQ("select * from CSEE order by sID, cName, major;");
+            app.printQ(5, 3);
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
+            // Query 6 실행하고 결과는 적절한 Print문을 이용해 Display
+            app.executeQ("select * from apply order by sID, cName, major;");
+            app.printQ(6, 3);
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
+
+            System.out.println("View test 3");
+            // Insert문 실행
+            app.stmt.executeUpdate("insert into CSEE values (333, 'UCLA', 'CS');");
+            // Query 7 실행하고 결과는 적절한 Print문을 이용해 Display
+            app.executeQ("select * from CSEE order by sID, cName, major;");
+            app.printQ(7, 3);
+            System.out.println("Continue? (Enter 1 for continue)");
+            scan.nextLine();
+            // Query 8 실행하고 결과는 적절한 Print문을 이용해 Display
+            app.executeQ("select * from Apply order by sID, cName, major;");
+            app.printQ(8, 4);
+
+            app.close();
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
     public void connection() throws SQLException {
-        connect = DriverManager.getConnection(url, user, password);
-        stmt = connect.createStatement();
-    }
-
-    public void close() {
         try {
-            if (rs != null) {
-                rs.close();
-            }
-
-            if (stmt != null) {
-                stmt.close();
-            }
-
-            if (connect != null) {
-                connect.close();
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+            connect = DriverManager.getConnection(url, user, password);
+            stmt = connect.createStatement();
+        } catch (SQLException ex) {
+            throw ex;
         }
     }
 
-    public void createTables() {
+    public void close() throws SQLException {
+        try {
+            if (rs != null) {
+                rs.close();
+            }if (stmt != null) {
+                stmt.close();
+            }if (connect != null) {
+                connect.close();
+            }
+        } catch (SQLException ex) {
+            throw ex;
+        }
+    }
+
+    public void createTables() throws SQLException {
         try {
             String createTable = "create table college(cName varchar(20), state char(2), enrollment int);" +
                     "create table student(sID int, sName varchar(20), GPA numeric(2,1), sizeHS int);" +
                     "create table apply(sID int, cName varchar(20), major varchar(20), decision char);";
             stmt.executeUpdate(createTable);
         } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
+            throw ex;
         }
     }
 
-    public void insertTuples() {
+    public void insertTuples() throws SQLException {
         try {
             String insertTuples = "insert into college values ('Stanford', 'CA', 15000);" +
                     "insert into college values ('Berkeley', 'CA', 36000);" +
@@ -188,18 +193,19 @@ public class SqlTest3 {
                     "insert into apply values (543, 'MIT', 'CS', 'N');";
             stmt.executeUpdate(insertTuples);
         } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
+            throw ex;
         }
     }
 
-    public void executeQ(String q) {
+    public void executeQ(String q) throws SQLException {
         try {
             rs = stmt.executeQuery(q);
         } catch (SQLException ex) {
+            throw ex;
         }
     }
 
-    public void printQ(int queryNum, int colNum) {
+    public void printQ(int queryNum, int colNum) throws SQLException {
         System.out.println("Query" + queryNum);
         try {
             rsMetaData = rs.getMetaData();
@@ -226,7 +232,7 @@ public class SqlTest3 {
                 tupleNum++;
             }
         } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
+            throw ex;
         }
         System.out.println("");
     }
